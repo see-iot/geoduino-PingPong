@@ -14,7 +14,13 @@
 #include <LoRa.h>
 #include <MKRWAN.h>
 
-const int LED=12;
+const int LED         = 12;
+const int SF          = 12;
+const float BW        = 125E3;
+const bool CRC        = true;
+const float FREQ      = 868E6;
+const long RX_TIMEOUT = 10000;
+const long TX_DELAY   = 1500;
 
 int counter = 0;
 
@@ -34,15 +40,17 @@ void setup() {
   LoRa.setPins(LORA_IRQ_DUMB, 6, 1); // set CS, reset, IRQ pin
   LoRa.setSPIFrequency(100000);
 
-  if (!LoRa.begin(868E6)) {
+  if (!LoRa.begin(FREQ)) {
     Serial.println("Starting LoRa failed!");
     while (1);
   }
 
   LoRa.setTxPower(17, PA_OUTPUT_PA_BOOST_PIN);
-  LoRa.setSpreadingFactor(7);
-  //LoRa.setSignalBandwidth(31.25E3);
-  LoRa.enableCrc();
+  LoRa.setSpreadingFactor(SF);
+  LoRa.setSignalBandwidth(BW);
+  if (CRC) {
+    LoRa.enableCrc();
+  }
 }
 
 void loop() {
@@ -57,7 +65,7 @@ void loop() {
 
   counter++;
 
-  int timeout = millis() + 200;
+  int timeout = millis() + RX_TIMEOUT;
   int packetSize;
 
   // try to parse packet
@@ -85,9 +93,9 @@ void loop() {
       Serial.println(LoRa.packetRssi());
     }
   } while (!packetSize && (millis() < timeout));
-  digitalWrite(LED, LOW);
-
   // Just wait a bit before sending next packet
-  delay(100);
+  delay(TX_DELAY);
+
+  digitalWrite(LED, LOW);
 }
 
